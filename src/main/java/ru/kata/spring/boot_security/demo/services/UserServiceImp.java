@@ -1,6 +1,5 @@
 package ru.kata.spring.boot_security.demo.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -12,6 +11,7 @@ import ru.kata.spring.boot_security.demo.repositoties.UserRepository;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -38,10 +38,17 @@ public class UserServiceImp implements UserService, UserDetailsService {
     }
 
     public void saveUser(User user) {
-        if (!user.getName().isBlank() && !user.getLastname().isBlank() && !user.getEmail().isBlank() &&!user.getPassword().isBlank()) {
-            if (findUserByEmail(user.getUsername()) == null) {
-                userRepository.save(user);}}
+        if (!user.getName().isBlank() && !user.getLastname().isBlank() &&
+                !user.getEmail().isBlank() && !user.getPassword().isBlank()) {
+            Optional<User> existingUser = Optional.ofNullable(findUserByEmail(user.getEmail()));
+
+            if (existingUser.isEmpty()) {
+                userRepository.save(user);
+            }
+        }
     }
+
+
     public void updateUser(User user, Long id) {
         User updateUser = findUser(id);
         if (user.getPassword().isBlank()) {
@@ -54,12 +61,14 @@ public class UserServiceImp implements UserService, UserDetailsService {
     }
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findUserByEmail(email);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found");
-        }
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(),
-                user.getAuthorities());
+        User user = Optional.ofNullable(userRepository.findUserByEmail(email))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                user.getAuthorities()
+        );
     }
 
     public void deleteUser(Long id) {

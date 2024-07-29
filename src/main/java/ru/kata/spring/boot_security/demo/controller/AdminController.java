@@ -68,12 +68,7 @@ public class AdminController {
         return "redirect:/admin/";
     }
 
-//    @GetMapping(value = "/new")
-//    public String newUser(@ModelAttribute("user") User user, Model model) {
-//        LOGGER.info("Creating a new user");
-//        model.addAttribute("roles", roleService.getListRoles());
-//        return "admin/new_user";
-//    }
+
 
     @PostMapping(value = "/save")
     public String saveUser(@ModelAttribute("user") User user) {
